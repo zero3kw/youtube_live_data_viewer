@@ -346,7 +346,7 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
         children: [
           Icon(icon, size: 20, color: Colors.white70),
           const SizedBox(width: 8),
-          Text(
+          SelectableText(
             '$label: ',
             style: const TextStyle(
               fontWeight: FontWeight.w500,
@@ -372,7 +372,7 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: SingleChildScrollView(
+      child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -400,7 +400,7 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
                         .convert(_rawPlayerData);
                     // TODO: クリップボードへのコピー機能を実装
                   },
-                  icon: const Icon(Icons.copy),
+                  icon: const Icon(Icons.copy, color: Colors.white70),
                   tooltip: 'Copy JSON',
                 ),
               ],
@@ -410,33 +410,15 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
               decoration: BoxDecoration(
                 color: const Color(0xFF1E1E1E),
                 borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
               ),
+              width: double.infinity,
               padding: const EdgeInsets.all(16),
-              child: JsonView.map(
-                _rawPlayerData!,
-                theme: JsonViewTheme(
-                  backgroundColor: const Color(0xFF1E1E1E),
-                  defaultTextStyle: const TextStyle(
-                    color: Color(0xFFCE9178),
-                    fontSize: 16,
-                    fontFamily: 'Fira Code',
-                  ),
-                  keyStyle: const TextStyle(
-                    color: Color(0xFF9CDCFE),
-                    fontSize: 16,
-                    fontFamily: 'Fira Code',
-                  ),
-                  closeIcon:
-                      const Icon(Icons.arrow_drop_down, color: Colors.white70),
-                  openIcon:
-                      const Icon(Icons.arrow_right, color: Colors.white70),
+              child: SelectableText(
+                const JsonEncoder.withIndent('  ').convert(_rawPlayerData),
+                style: const TextStyle(
+                  color: Color(0xFFCE9178),
+                  fontSize: 16,
+                  fontFamily: 'Fira Code',
                 ),
               ),
             ),
