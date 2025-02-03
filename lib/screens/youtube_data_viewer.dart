@@ -7,7 +7,8 @@ import 'package:intl/intl.dart';
 import '../models/video_info.dart';
 
 class YouTubeDataViewer extends StatefulWidget {
-  const YouTubeDataViewer({super.key});
+  final String? initialUrl;
+  const YouTubeDataViewer({super.key, this.initialUrl});
 
   @override
   State<YouTubeDataViewer> createState() => _YouTubeDataViewerState();
@@ -18,6 +19,15 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
   YoutubePlayerController? _playerController;
   VideoInfo? _videoInfo;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialUrl != null) {
+      _urlController.text = widget.initialUrl!;
+      _fetchData();
+    }
+  }
 
   @override
   void dispose() {
@@ -151,8 +161,10 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
     }
 
     try {
+      // CORSプロキシを使用して動画情報を取得
       final response = await http.get(
-        Uri.parse('https://www.youtube.com/watch?v=$videoId'),
+        Uri.parse(
+            'https://corsproxy.io/?https://www.youtube.com/watch?v=$videoId'),
         headers: {
           'User-Agent':
               'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -198,6 +210,7 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
           html.substring(startIndex + startTag.length, endIndex + 1);
       final playerData = json.decode(jsonStr);
 
+      // プレーヤーを初期化
       setState(() {
         _videoInfo = VideoInfo.fromJson(playerData);
         _playerController = YoutubePlayerController.fromVideoId(
@@ -206,6 +219,7 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
             showControls: true,
             mute: false,
             showFullscreenButton: true,
+            enableJavaScript: true,
           ),
         );
       });

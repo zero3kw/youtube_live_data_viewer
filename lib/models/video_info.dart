@@ -46,16 +46,21 @@ class VideoInfo {
             .toList() ??
         [];
 
-    final highestQualityFormat = videoFormats.reduce((prev, current) =>
-        (prev['bitrate'] > current['bitrate']) ? prev : current);
+    final highestQualityFormat = videoFormats.isNotEmpty
+        ? videoFormats.reduce((prev, current) =>
+            (prev['bitrate'] > current['bitrate']) ? prev : current)
+        : {};
+
+    final channelId = videoDetails['channelId'] ?? '';
+    final videoId = videoDetails['videoId'] ?? '';
 
     return VideoInfo(
       title: videoDetails['title'] ?? '',
       description: videoDetails['shortDescription'] ?? '',
       channelName: videoDetails['author'] ?? '',
-      channelUrl: microformat['ownerProfileUrl'] ?? '',
-      channelId: videoDetails['channelId'] ?? '',
-      videoId: videoDetails['videoId'] ?? '',
+      channelUrl: 'https://www.youtube.com/channel/$channelId',
+      channelId: channelId,
+      videoId: videoId,
       viewCount: videoDetails['viewCount']?.toString() ?? '0',
       isLive: videoDetails['isLive'] ?? false,
       isLiveNow: microformat['liveBroadcastDetails']?['isLiveNow'] ?? false,

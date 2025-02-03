@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:youtube_live_data_viewer/screens/youtube_data_viewer.dart';
+import 'package:universal_html/html.dart' as html;
 
 void main() {
-  runApp(const MyApp());
+  final uri = Uri.parse(html.window.location.href);
+  final url = uri.queryParameters['url'];
+
+  runApp(MyApp(initialUrl: url));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String? initialUrl;
+
+  const MyApp({super.key, this.initialUrl});
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +22,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.red),
         useMaterial3: true,
       ),
-      home: const YouTubeDataViewer(),
+      home: YouTubeDataViewer(initialUrl: initialUrl),
     );
   }
 }
