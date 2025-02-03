@@ -23,13 +23,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
-  # パフォーマンス最適化
-  assets:
-    - assets/
-
-  # フォントの事前ロード
-  fonts:
-    - family: Fira Code
-      fonts:
-        - asset: assets/fonts/FiraCode-Regular.ttf

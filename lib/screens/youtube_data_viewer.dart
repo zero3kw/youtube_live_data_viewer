@@ -95,33 +95,39 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
         ),
         elevation: 0,
       ),
-      body: SelectionArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1200),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSearchCard(),
-                  if (_error != null) ...[
-                    const SizedBox(height: 24),
-                    _buildErrorMessage(),
-                  ],
-                  if (_playerController != null) ...[
-                    const SizedBox(height: 24),
-                    _buildVideoPlayer(),
-                  ],
-                  if (_videoInfo != null) ...[
-                    const SizedBox(height: 24),
-                    _buildVideoInfo(),
-                    const SizedBox(height: 24),
-                    _buildRawData(),
-                  ],
-                ],
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: _buildSearchCard(),
               ),
-            ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (_error != null) ...[
+                        _buildErrorMessage(),
+                        const SizedBox(height: 24),
+                      ],
+                      if (_playerController != null) ...[
+                        _buildVideoPlayer(),
+                        const SizedBox(height: 24),
+                      ],
+                      if (_videoInfo != null) ...[
+                        _buildVideoInfo(),
+                        const SizedBox(height: 24),
+                        _buildRawData(),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -130,59 +136,34 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
 
   Widget _buildSearchCard() {
     return Card(
-      elevation: 0,
-      color: const Color(0xFF242424),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
               child: TextField(
                 controller: _urlController,
+                decoration: InputDecoration(
+                  hintText: 'YouTube Live URLを入力',
+                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFF1E1E1E),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                ),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
                 ),
-                decoration: InputDecoration(
-                  labelText: 'YouTube URL',
-                  labelStyle: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
-                    fontSize: 16,
-                  ),
-                  hintText: 'https://www.youtube.com/watch?v=...',
-                  hintStyle: TextStyle(
-                    color: Colors.white.withOpacity(0.3),
-                    fontSize: 16,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Colors.white.withOpacity(0.1),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Colors.white.withOpacity(0.1),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: Color(0xFFFF0000),
-                    ),
-                  ),
-                  prefixIcon: Icon(
-                    Icons.link,
-                    color: Colors.white.withOpacity(0.7),
-                  ),
-                  filled: true,
-                  fillColor: const Color(0xFF1E1E1E),
-                ),
-                onSubmitted: (value) => _fetchData(),
               ),
             ),
             const SizedBox(width: 16),
@@ -193,7 +174,7 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
-                  vertical: 20,
+                  vertical: 16,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -253,14 +234,11 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
 
   Widget _buildVideoPlayer() {
     return Card(
-      child: AspectRatio(
-        aspectRatio: 16 / 9,
-        child: _playerController != null
-            ? YoutubePlayer(
-                controller: _playerController!,
-                aspectRatio: 16 / 9,
-              )
-            : const Center(child: CircularProgressIndicator()),
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      clipBehavior: Clip.antiAlias,
+      child: YoutubePlayer(
+        controller: _playerController!,
       ),
     );
   }
@@ -418,7 +396,7 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
                 style: const TextStyle(
                   color: Color(0xFFCE9178),
                   fontSize: 16,
-                  fontFamily: 'Fira Code',
+                  fontFamily: 'Roboto',
                 ),
               ),
             ),
@@ -505,15 +483,7 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
       // プレーヤーを初期化
       setState(() {
         _videoInfo = VideoInfo.fromJson(playerData);
-        _playerController = YoutubePlayerController.fromVideoId(
-          videoId: videoId,
-          params: const YoutubePlayerParams(
-            showControls: true,
-            mute: false,
-            showFullscreenButton: true,
-            enableJavaScript: true,
-          ),
-        );
+        _initializePlayer(videoId);
         _rawPlayerData = playerData;
       });
     } catch (e) {
@@ -521,5 +491,18 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
         _error = e.toString();
       });
     }
+  }
+
+  void _initializePlayer(String videoId) {
+    _playerController = YoutubePlayerController.fromVideoId(
+      videoId: videoId,
+      params: const YoutubePlayerParams(
+        showFullscreenButton: true,
+        strictRelatedVideos: true,
+        showVideoAnnotations: false,
+        playsInline: true,
+        enableCaption: false,
+      ),
+    );
   }
 }
