@@ -5,6 +5,8 @@ import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import '../models/video_info.dart';
+import 'package:flutter_highlight/flutter_highlight.dart';
+import 'package:flutter_json_view/flutter_json_view.dart';
 
 class YouTubeDataViewer extends StatefulWidget {
   final String? initialUrl;
@@ -20,6 +22,7 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
   VideoInfo? _videoInfo;
   String? _error;
   dynamic _rawPlayerData;
+  bool _isJsonExpanded = false;
 
   @override
   void initState() {
@@ -72,49 +75,104 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('YouTube Live Data Viewer'),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: const Text(
+          'YouTube Live Data Viewer',
+          style: TextStyle(color: Colors.white),
+        ),
+        elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _urlController,
-                    decoration: const InputDecoration(
-                      labelText: 'YouTube URL',
-                      hintText: 'https://www.youtube.com/watch?v=...',
-                    ),
-                    onSubmitted: (value) => _fetchData(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _fetchData,
-                  child: const Text('取得'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (_error != null)
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Theme.of(context).colorScheme.primary,
+              Theme.of(context).colorScheme.surface,
+            ],
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Card(
-                color: Colors.red[100],
+                elevation: 8,
+                shadowColor: Colors.black26,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Text(_error!),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _urlController,
+                          decoration: InputDecoration(
+                            labelText: 'YouTube URL',
+                            hintText: 'https://www.youtube.com/watch?v=...',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            prefixIcon: const Icon(Icons.link),
+                          ),
+                          onSubmitted: (value) => _fetchData(),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      ElevatedButton.icon(
+                        onPressed: _fetchData,
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 16,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(Icons.search),
+                        label: const Text('取得'),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            if (_playerController != null) _buildVideoPlayer(),
-            if (_videoInfo != null) ...[
               const SizedBox(height: 16),
-              _buildVideoInfo(),
-              const SizedBox(height: 16),
-              _buildRawData(),
+              if (_error != null)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.red.withOpacity(0.3)),
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.red),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _error!,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (_playerController != null) _buildVideoPlayer(),
+              if (_videoInfo != null) ...[
+                const SizedBox(height: 16),
+                _buildVideoInfo(),
+                const SizedBox(height: 16),
+                _buildRawData(),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -157,7 +215,7 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
               ],
             ),
             const SizedBox(height: 16),
-            Text(
+            SelectableText(
               _videoInfo!.title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
@@ -172,6 +230,23 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
                 '${_formatNumber(_videoInfo!.viewCount)}回'),
             if (_videoInfo!.isLive) _buildInfoRow(Icons.live_tv, 'ライブ配信', 'はい'),
             if (_videoInfo!.isLiveNow) _buildInfoRow(Icons.stream, '配信中', 'はい'),
+            if (_videoInfo!.isLiveDvrEnabled)
+              _buildInfoRow(Icons.replay_circle_filled, 'DVR', '有効'),
+            if (_videoInfo!.startTimestamp.isNotEmpty)
+              _buildInfoRow(Icons.play_circle, '開始時刻',
+                  _formatDate(_videoInfo!.startTimestamp)),
+            if (_videoInfo!.endTimestamp.isNotEmpty)
+              _buildInfoRow(Icons.stop_circle, '終了時刻',
+                  _formatDate(_videoInfo!.endTimestamp)),
+            if (_videoInfo!.category.isNotEmpty)
+              _buildInfoRow(Icons.category, 'カテゴリ', _videoInfo!.category),
+            if (_videoInfo!.maxQuality.isNotEmpty)
+              _buildInfoRow(Icons.high_quality, '最高画質', _videoInfo!.maxQuality),
+            if (_videoInfo!.maxBitrate.isNotEmpty)
+              _buildInfoRow(Icons.speed, 'ビットレート',
+                  _formatBitrate(_videoInfo!.maxBitrate)),
+            if (_videoInfo!.fps > 0)
+              _buildInfoRow(Icons.timer, 'FPS', '${_videoInfo!.fps}'),
             if (_videoInfo!.description.isNotEmpty) ...[
               const SizedBox(height: 16),
               Text(
@@ -182,7 +257,7 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
                     ),
               ),
               const SizedBox(height: 8),
-              Text(_videoInfo!.description),
+              SelectableText(_videoInfo!.description),
             ],
           ],
         ),
@@ -205,7 +280,7 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
             ),
           ),
           Expanded(
-            child: Text(
+            child: SelectableText(
               value,
               style: const TextStyle(
                 color: Colors.black87,
@@ -227,15 +302,29 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(Icons.code, color: Colors.grey[700]),
-                const SizedBox(width: 8),
-                Text(
-                  'Raw Data',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[800],
-                      ),
+                Row(
+                  children: [
+                    Icon(Icons.code, color: Colors.grey[700]),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Raw Data',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[800],
+                          ),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  onPressed: () {
+                    final data = const JsonEncoder.withIndent('  ')
+                        .convert(_rawPlayerData);
+                    // TODO: クリップボードへのコピー機能を実装
+                  },
+                  icon: const Icon(Icons.copy),
+                  tooltip: 'Copy JSON',
                 ),
               ],
             ),
@@ -253,13 +342,23 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
                 ],
               ),
               padding: const EdgeInsets.all(16),
-              child: SelectableText(
-                const JsonEncoder.withIndent('  ').convert(_rawPlayerData),
-                style: const TextStyle(
-                  fontFamily: 'Fira Code',
-                  fontSize: 14,
-                  color: Color(0xFFD4D4D4),
-                  height: 1.5,
+              child: JsonView.map(
+                _rawPlayerData,
+                theme: JsonViewTheme(
+                  backgroundColor: const Color(0xFF1E1E1E),
+                  defaultTextStyle: const TextStyle(
+                    color: Color(0xFFCE9178),
+                    fontSize: 14,
+                    fontFamily: 'Fira Code',
+                  ),
+                  keyStyle: const TextStyle(
+                    color: Color(0xFF9CDCFE),
+                    fontSize: 14,
+                    fontFamily: 'Fira Code',
+                  ),
+                  closeIcon:
+                      const Icon(Icons.arrow_drop_down, color: Colors.white),
+                  openIcon: const Icon(Icons.arrow_right, color: Colors.white),
                 ),
               ),
             ),

@@ -19,7 +19,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'YouTube Live Data Viewer',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.red),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFFFF0000),
+          brightness: Brightness.light,
+          primary: const Color(0xFFFF0000),
+          secondary: const Color(0xFFFF4444),
+        ),
         useMaterial3: true,
       ),
       home: YouTubeDataViewer(initialUrl: initialUrl),
