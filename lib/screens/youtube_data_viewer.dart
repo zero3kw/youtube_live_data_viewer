@@ -19,6 +19,7 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
   YoutubePlayerController? _playerController;
   VideoInfo? _videoInfo;
   String? _error;
+  dynamic _rawPlayerData;
 
   @override
   void initState() {
@@ -78,43 +79,40 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _urlController,
-                        decoration: const InputDecoration(
-                          hintText: 'Enter YouTube Live URL',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _urlController,
+                    decoration: const InputDecoration(
+                      labelText: 'YouTube URL',
+                      hintText: 'https://www.youtube.com/watch?v=...',
                     ),
-                    const SizedBox(width: 16),
-                    ElevatedButton(
-                      onPressed: _fetchData,
-                      child: const Text('Fetch Data'),
-                    ),
-                  ],
+                    onSubmitted: (value) => _fetchData(),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: _fetchData,
+                  child: const Text('取得'),
+                ),
+              ],
             ),
+            const SizedBox(height: 16),
             if (_error != null)
               Card(
-                color: Colors.red.shade100,
+                color: Colors.red[100],
                 child: Padding(
                   padding: const EdgeInsets.all(16),
-                  child:
-                      Text(_error!, style: const TextStyle(color: Colors.red)),
+                  child: Text(_error!),
                 ),
               ),
+            if (_playerController != null) _buildVideoPlayer(),
             if (_videoInfo != null) ...[
-              _buildVideoPlayer(),
+              const SizedBox(height: 16),
               _buildVideoInfo(),
-              _buildStreamInfo(),
-              _buildDescription(),
+              const SizedBox(height: 16),
+              _buildRawData(),
             ],
           ],
         ),
@@ -132,6 +130,141 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
                 aspectRatio: 16 / 9,
               )
             : const Center(child: CircularProgressIndicator()),
+      ),
+    );
+  }
+
+  Widget _buildVideoInfo() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.info_outline, color: Colors.grey[700]),
+                const SizedBox(width: 8),
+                Text(
+                  'Video Information',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _videoInfo!.title,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            _buildInfoRow(
+                Icons.account_circle, 'チャンネル', _videoInfo!.channelName),
+            _buildInfoRow(Icons.numbers, 'チャンネルID', _videoInfo!.channelId),
+            _buildInfoRow(Icons.video_library, '動画ID', _videoInfo!.videoId),
+            _buildInfoRow(Icons.visibility, '視聴回数',
+                '${_formatNumber(_videoInfo!.viewCount)}回'),
+            if (_videoInfo!.isLive) _buildInfoRow(Icons.live_tv, 'ライブ配信', 'はい'),
+            if (_videoInfo!.isLiveNow) _buildInfoRow(Icons.stream, '配信中', 'はい'),
+            if (_videoInfo!.description.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text(
+                '説明',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[700],
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(_videoInfo!.description),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Colors.grey[600]),
+          const SizedBox(width: 8),
+          Text(
+            '$label: ',
+            style: TextStyle(
+              fontWeight: FontWeight.w500,
+              color: Colors.grey[700],
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                color: Colors.black87,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRawData() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.code, color: Colors.grey[700]),
+                const SizedBox(width: 8),
+                Text(
+                  'Raw Data',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E1E),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(16),
+              child: SelectableText(
+                const JsonEncoder.withIndent('  ').convert(_rawPlayerData),
+                style: const TextStyle(
+                  fontFamily: 'Fira Code',
+                  fontSize: 14,
+                  color: Color(0xFFD4D4D4),
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -222,93 +355,12 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
             enableJavaScript: true,
           ),
         );
+        _rawPlayerData = playerData;
       });
     } catch (e) {
       setState(() {
         _error = e.toString();
       });
     }
-  }
-
-  Widget _buildVideoInfo() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _videoInfo!.title,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 8),
-            InkWell(
-              onTap: () async {
-                final url = Uri.parse(_videoInfo!.channelUrl);
-                if (await canLaunchUrl(url)) {
-                  await launchUrl(url);
-                }
-              },
-              child: Text(
-                _videoInfo!.channelName,
-                style: const TextStyle(
-                  color: Colors.blue,
-                  decoration: TextDecoration.underline,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text('視聴回数: ${_formatNumber(_videoInfo!.viewCount)}回'),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStreamInfo() {
-    if (!_videoInfo!.isLive) return const SizedBox.shrink();
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'ライブ配信情報',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Text('配信中: ${_videoInfo!.isLiveNow ? "はい" : "いいえ"}'),
-            Text('開始時刻: ${_formatDate(_videoInfo!.startTimestamp)}'),
-            if (_videoInfo!.endTimestamp.isNotEmpty)
-              Text('終了時刻: ${_formatDate(_videoInfo!.endTimestamp)}'),
-            Text('最高画質: ${_videoInfo!.maxQuality}'),
-            Text('最大ビットレート: ${_formatBitrate(_videoInfo!.maxBitrate)}'),
-            Text('FPS: ${_videoInfo!.fps}'),
-            Text('DVR: ${_videoInfo!.isLiveDvrEnabled ? "有効" : "無効"}'),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDescription() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '説明',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(_videoInfo!.description),
-          ],
-        ),
-      ),
-    );
   }
 }
