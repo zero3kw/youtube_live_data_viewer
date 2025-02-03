@@ -21,9 +21,20 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFFFF0000),
-          brightness: Brightness.light,
+          brightness: Brightness.dark,
           primary: const Color(0xFFFF0000),
           secondary: const Color(0xFFFF4444),
+          background: const Color(0xFF121212),
+          surface: const Color(0xFF1E1E1E),
+        ),
+        cardTheme: const CardTheme(
+          color: Color(0xFF242424),
+        ),
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: Colors.white70),
+          bodyMedium: TextStyle(color: Colors.white70),
+          titleLarge: TextStyle(color: Colors.white),
+          titleMedium: TextStyle(color: Colors.white),
         ),
         useMaterial3: true,
       ),

@@ -74,104 +74,172 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        title: const Text(
-          'YouTube Live Data Viewer',
-          style: TextStyle(color: Colors.white),
-        ),
-        elevation: 0,
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Theme.of(context).colorScheme.primary,
-              Theme.of(context).colorScheme.surface,
-            ],
-          ),
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Card(
-                elevation: 8,
-                shadowColor: Colors.black26,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _urlController,
-                          decoration: InputDecoration(
-                            labelText: 'YouTube URL',
-                            hintText: 'https://www.youtube.com/watch?v=...',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            prefixIcon: const Icon(Icons.link),
-                          ),
-                          onSubmitted: (value) => _fetchData(),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      ElevatedButton.icon(
-                        onPressed: _fetchData,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 16,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        icon: const Icon(Icons.search),
-                        label: const Text('取得'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              if (_error != null)
+      backgroundColor: const Color(0xFF121212),
+      body: SelectionArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1200),
+            child: ListView(
+              children: [
                 Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.red.withOpacity(0.3)),
+                  color: const Color(0xFF1A1A1A),
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.of(context).padding.top + 16,
+                    left: 24,
+                    right: 24,
+                    bottom: 24,
                   ),
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
+                  child: const Text(
+                    'YouTube Live Data Viewer',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.error_outline, color: Colors.red),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          _error!,
-                          style: const TextStyle(color: Colors.red),
+                      Card(
+                        elevation: 0,
+                        color: const Color(0xFF242424),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _urlController,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                  decoration: InputDecoration(
+                                    labelText: 'YouTube URL',
+                                    labelStyle: TextStyle(
+                                      color: Colors.white.withOpacity(0.7),
+                                      fontSize: 16,
+                                    ),
+                                    hintText:
+                                        'https://www.youtube.com/watch?v=...',
+                                    hintStyle: TextStyle(
+                                      color: Colors.white.withOpacity(0.3),
+                                      fontSize: 16,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: Colors.white.withOpacity(0.1),
+                                      ),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: Colors.white.withOpacity(0.1),
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        color: Color(0xFFFF0000),
+                                      ),
+                                    ),
+                                    prefixIcon: Icon(
+                                      Icons.link,
+                                      color: Colors.white.withOpacity(0.7),
+                                    ),
+                                    filled: true,
+                                    fillColor: const Color(0xFF1E1E1E),
+                                  ),
+                                  onSubmitted: (value) => _fetchData(),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              ElevatedButton.icon(
+                                onPressed: _fetchData,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFFF0000),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 20,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                icon: const Icon(
+                                  Icons.search,
+                                  size: 20,
+                                  color: Colors.white,
+                                ),
+                                label: const Text(
+                                  '取得',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
+                      if (_error != null) ...[
+                        const SizedBox(height: 24),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.red.withOpacity(0.2),
+                            ),
+                          ),
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                color: Colors.red.withOpacity(0.8),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _error!,
+                                  style: TextStyle(
+                                    color: Colors.red.withOpacity(0.8),
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      if (_playerController != null) ...[
+                        const SizedBox(height: 24),
+                        _buildVideoPlayer(),
+                      ],
+                      if (_videoInfo != null) ...[
+                        const SizedBox(height: 24),
+                        _buildVideoInfo(),
+                        const SizedBox(height: 24),
+                        _buildRawData(),
+                      ],
                     ],
                   ),
                 ),
-              if (_playerController != null) _buildVideoPlayer(),
-              if (_videoInfo != null) ...[
-                const SizedBox(height: 16),
-                _buildVideoInfo(),
-                const SizedBox(height: 16),
-                _buildRawData(),
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -203,13 +271,14 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
           children: [
             Row(
               children: [
-                Icon(Icons.info_outline, color: Colors.grey[700]),
+                Icon(Icons.info_outline, color: Colors.white70),
                 const SizedBox(width: 8),
                 Text(
                   'Video Information',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey[800],
+                        color: Colors.white,
+                        fontSize: 20,
                       ),
                 ),
               ],
@@ -253,7 +322,7 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
                 '説明',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey[700],
+                      color: Colors.white70,
                     ),
               ),
               const SizedBox(height: 8),
@@ -270,20 +339,22 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: Colors.grey[600]),
+          Icon(icon, size: 20, color: Colors.white70),
           const SizedBox(width: 8),
           Text(
             '$label: ',
-            style: TextStyle(
+            style: const TextStyle(
               fontWeight: FontWeight.w500,
-              color: Colors.grey[700],
+              color: Colors.white70,
+              fontSize: 16,
             ),
           ),
           Expanded(
             child: SelectableText(
               value,
               style: const TextStyle(
-                color: Colors.black87,
+                color: Colors.white70,
+                fontSize: 16,
               ),
             ),
           ),
@@ -306,13 +377,14 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.code, color: Colors.grey[700]),
+                    Icon(Icons.code, color: Colors.white70),
                     const SizedBox(width: 8),
                     Text(
                       'Raw Data',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: Colors.grey[800],
+                            color: Colors.white,
+                            fontSize: 20,
                           ),
                     ),
                   ],
@@ -348,17 +420,18 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
                   backgroundColor: const Color(0xFF1E1E1E),
                   defaultTextStyle: const TextStyle(
                     color: Color(0xFFCE9178),
-                    fontSize: 14,
+                    fontSize: 16,
                     fontFamily: 'Fira Code',
                   ),
                   keyStyle: const TextStyle(
                     color: Color(0xFF9CDCFE),
-                    fontSize: 14,
+                    fontSize: 16,
                     fontFamily: 'Fira Code',
                   ),
                   closeIcon:
-                      const Icon(Icons.arrow_drop_down, color: Colors.white),
-                  openIcon: const Icon(Icons.arrow_right, color: Colors.white),
+                      const Icon(Icons.arrow_drop_down, color: Colors.white70),
+                  openIcon:
+                      const Icon(Icons.arrow_right, color: Colors.white70),
                 ),
               ),
             ),
