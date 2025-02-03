@@ -1,16 +1,16 @@
-# youtube_live_data_viewer
+# YouTube Live Data Viewer
 
-A new Flutter project.
+YouTube Live配信の情報を表示するWebアプリケーション。
 
-## Getting Started
+## 機能
 
-This project is a starting point for a Flutter application.
+- YouTube Live配信のURLから配信情報を取得
+- 配信のプレビュー再生
+- 詳細な配信情報の表示
+- 生の配信データの表示（JSON形式）
 
-A few resources to get you started if this is your first Flutter project:
+## 技術スタック
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Flutter Web
+- YouTube Player IFrame
+- Universal HTML

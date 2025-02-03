@@ -1,12 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:intl/intl.dart';
-import '../models/video_info.dart';
-import 'package:flutter_highlight/flutter_highlight.dart';
 import 'package:flutter_json_view/flutter_json_view.dart';
+import 'package:http/http.dart' as http;
+import '../models/video_info.dart';
 
 class YouTubeDataViewer extends StatefulWidget {
   final String? initialUrl;
@@ -21,7 +18,7 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
   YoutubePlayerController? _playerController;
   VideoInfo? _videoInfo;
   String? _error;
-  dynamic _rawPlayerData;
+  Map<String, dynamic>? _rawPlayerData;
   bool _isJsonExpanded = false;
 
   @override
@@ -41,8 +38,15 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
   }
 
   String _formatNumber(String number) {
-    final formatter = NumberFormat('#,###');
-    return formatter.format(int.parse(number));
+    try {
+      final value = int.parse(number);
+      return value.toString().replaceAllMapped(
+            RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+            (match) => '${match[1]},',
+          );
+    } catch (e) {
+      return number;
+    }
   }
 
   String _formatBitrate(String bitrate) {
@@ -55,10 +59,14 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
     return '$value bps';
   }
 
-  String _formatDate(String dateString) {
-    if (dateString.isEmpty) return '';
-    final date = DateTime.parse(dateString);
-    return DateFormat('yyyy/MM/dd HH:mm:ss').format(date);
+  String _formatDate(String timestamp) {
+    try {
+      final date = DateTime.parse(timestamp);
+      return '${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')} '
+          '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}:${date.second.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return timestamp;
+    }
   }
 
   String _extractVideoId(String url) {
@@ -75,173 +83,170 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1A1A1A),
+        title: const Text(
+          'YouTube Live Data Viewer',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        elevation: 0,
+      ),
       body: SelectionArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 1200),
-            child: ListView(
-              children: [
-                Container(
-                  color: const Color(0xFF1A1A1A),
-                  padding: EdgeInsets.only(
-                    top: MediaQuery.of(context).padding.top + 16,
-                    left: 24,
-                    right: 24,
-                    bottom: 24,
-                  ),
-                  child: const Text(
-                    'YouTube Live Data Viewer',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Card(
-                        elevation: 0,
-                        color: const Color(0xFF242424),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: _urlController,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                  ),
-                                  decoration: InputDecoration(
-                                    labelText: 'YouTube URL',
-                                    labelStyle: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
-                                      fontSize: 16,
-                                    ),
-                                    hintText:
-                                        'https://www.youtube.com/watch?v=...',
-                                    hintStyle: TextStyle(
-                                      color: Colors.white.withOpacity(0.3),
-                                      fontSize: 16,
-                                    ),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide(
-                                        color: Colors.white.withOpacity(0.1),
-                                      ),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide(
-                                        color: Colors.white.withOpacity(0.1),
-                                      ),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: const BorderSide(
-                                        color: Color(0xFFFF0000),
-                                      ),
-                                    ),
-                                    prefixIcon: Icon(
-                                      Icons.link,
-                                      color: Colors.white.withOpacity(0.7),
-                                    ),
-                                    filled: true,
-                                    fillColor: const Color(0xFF1E1E1E),
-                                  ),
-                                  onSubmitted: (value) => _fetchData(),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              ElevatedButton.icon(
-                                onPressed: _fetchData,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFFF0000),
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 20,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  elevation: 0,
-                                ),
-                                icon: const Icon(
-                                  Icons.search,
-                                  size: 20,
-                                  color: Colors.white,
-                                ),
-                                label: const Text(
-                                  '取得',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      if (_error != null) ...[
-                        const SizedBox(height: 24),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.red.withOpacity(0.2),
-                            ),
-                          ),
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.error_outline,
-                                color: Colors.red.withOpacity(0.8),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  _error!,
-                                  style: TextStyle(
-                                    color: Colors.red.withOpacity(0.8),
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      if (_playerController != null) ...[
-                        const SizedBox(height: 24),
-                        _buildVideoPlayer(),
-                      ],
-                      if (_videoInfo != null) ...[
-                        const SizedBox(height: 24),
-                        _buildVideoInfo(),
-                        const SizedBox(height: 24),
-                        _buildRawData(),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSearchCard(),
+                  if (_error != null) ...[
+                    const SizedBox(height: 24),
+                    _buildErrorMessage(),
+                  ],
+                  if (_playerController != null) ...[
+                    const SizedBox(height: 24),
+                    _buildVideoPlayer(),
+                  ],
+                  if (_videoInfo != null) ...[
+                    const SizedBox(height: 24),
+                    _buildVideoInfo(),
+                    const SizedBox(height: 24),
+                    _buildRawData(),
+                  ],
+                ],
+              ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSearchCard() {
+    return Card(
+      elevation: 0,
+      color: const Color(0xFF242424),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _urlController,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'YouTube URL',
+                  labelStyle: TextStyle(
+                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 16,
+                  ),
+                  hintText: 'https://www.youtube.com/watch?v=...',
+                  hintStyle: TextStyle(
+                    color: Colors.white.withOpacity(0.3),
+                    fontSize: 16,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Colors.white.withOpacity(0.1),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Colors.white.withOpacity(0.1),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFFF0000),
+                    ),
+                  ),
+                  prefixIcon: Icon(
+                    Icons.link,
+                    color: Colors.white.withOpacity(0.7),
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFF1E1E1E),
+                ),
+                onSubmitted: (value) => _fetchData(),
+              ),
+            ),
+            const SizedBox(width: 16),
+            ElevatedButton.icon(
+              onPressed: _fetchData,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF0000),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 20,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              icon: const Icon(
+                Icons.search,
+                size: 20,
+                color: Colors.white,
+              ),
+              label: const Text(
+                '取得',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorMessage() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.red.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.red.withOpacity(0.2),
+        ),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Icon(
+            Icons.error_outline,
+            color: Colors.red.withOpacity(0.8),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _error!,
+              style: TextStyle(
+                color: Colors.red.withOpacity(0.8),
+                fontSize: 16,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -415,7 +420,7 @@ class _YouTubeDataViewerState extends State<YouTubeDataViewer> {
               ),
               padding: const EdgeInsets.all(16),
               child: JsonView.map(
-                _rawPlayerData,
+                _rawPlayerData!,
                 theme: JsonViewTheme(
                   backgroundColor: const Color(0xFF1E1E1E),
                   defaultTextStyle: const TextStyle(
